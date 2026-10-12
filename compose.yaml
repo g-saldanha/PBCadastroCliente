@@ -1,0 +1,7 @@
+﻿services:
+  pbcadastrocliente:
+    image: pbcadastrocliente
+    build:
+      context: .
+      dockerfile: Dockerfile
+
