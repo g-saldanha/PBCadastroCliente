@@ -10,6 +10,6 @@ Content-Type: application/json
 
 {
   "nome": "João da Silva",
-  "cpf": "12345678909",
+  "cpf": "123456789-909",
   "email": "joao@email.com"
 }

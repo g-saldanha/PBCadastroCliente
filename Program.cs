@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Asp.Versioning;
+using FluentValidation;
+using PBCadastroCliente.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,7 @@ builder.Services.AddApiVersioning(options =>
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
 
+builder.Services.AddValidatorsFromAssemblyContaining<CriarClienteRequestValidator>();
 
 var app = builder.Build();
 
@@ -27,8 +30,13 @@ app.UseHttpsRedirection();
 
 clientesGroup.MapGet("/{id}", (Guid id) => Results.Ok(new { Id = id, Nome = "Cliente Teste" }));
 
-clientesGroup.MapPost("/", (CriarClienteRequest request) =>
+clientesGroup.MapPost("/", async (CriarClienteRequest request, IValidator<CriarClienteRequest> validator) =>
 {
+    var validationResult = await validator.ValidateAsync(request);
+    if (!validationResult.IsValid)
+    {
+        return Results.ValidationProblem(validationResult.ToDictionary());
+    }
     var novoId = Guid.NewGuid();
 
     return Results.Created($"/api/v1/clientes/{novoId}",
