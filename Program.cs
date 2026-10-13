@@ -1,41 +1,40 @@
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using Asp.Versioning;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi0
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+});
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+var versionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1))
+    .Build();
+
+var clientesGroup = app.MapGroup("/api/v{version:apiVersion}/clientes")
+    .WithApiVersionSet(versionSet);
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+clientesGroup.MapGet("/{id}", (Guid id) => Results.Ok(new { Id = id, Nome = "Cliente Teste" }));
 
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast");
+clientesGroup.MapPost("/", (CriarClienteRequest request) =>
+{
+    var novoId = Guid.NewGuid();
+
+    return Results.Created($"/api/v1/clientes/{novoId}",
+        new { id = novoId, message = "Cliente cadastrado com sucesso" });
+});
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public record CriarClienteRequest(string Nome, string Cpf, string Email);

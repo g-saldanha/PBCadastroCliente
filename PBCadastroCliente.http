@@ -1,6 +1,15 @@
 @PBCadastroCliente_HostAddress = http://localhost:5054
 
-GET {{PBCadastroCliente_HostAddress}}/weatherforecast/
+GET {{PBCadastroCliente_HostAddress}}/api/v1/clientes/3fa85f64-5717-4562-b3fc-2c963f66afa6
 Accept: application/json
 
 ###
+
+POST {{PBCadastroCliente_HostAddress}}/api/v1/clientes
+Content-Type: application/json
+
+{
+  "nome": "João da Silva",
+  "cpf": "12345678909",
+  "email": "joao@email.com"
+}
