@@ -9,8 +9,14 @@
 
     <ItemGroup>
         <PackageReference Include="Asp.Versioning.Http" Version="10.2.3" />
+        <PackageReference Include="coverlet.collector" Version="10.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+        <PackageReference Include="xunit.v3" Version="4.0.2" />
     </ItemGroup>
 
 </Project>

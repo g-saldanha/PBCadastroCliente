@@ -15,6 +15,7 @@ public class CriarClienteRequestValidator : AbstractValidator<CriarClienteReques
             .EmailAddress().WithMessage("O Formato do email é inválido");
         
         RuleFor(x => x.Cpf)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("O Cpf é obrigatório")
             .Length(11).WithMessage("O CPF deve conter 11 caracteres")
             .Matches(@"^\d{11}$").WithMessage("O CPF deve conter apenas números")

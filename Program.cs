@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using Asp.Versioning;
 using FluentValidation;
 using PBCadastroCliente.Validators;
