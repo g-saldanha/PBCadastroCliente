@@ -1,5 +1,8 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using PBCadastroCliente.Data;
+using PBCadastroCliente.Messages;
 using PBCadastroCliente.Services;
 using Xunit;
 
@@ -20,7 +23,8 @@ public class ClienteServiceTests
     public async Task CadastrarAsync_DeveSalvarClienteNoBanco_E_RetornarClienteGerado()
     {
         var dbContext = GetDbContext();
-        var service = new ClienteService(dbContext);
+        var publishEndpointMock = new Mock<IPublishEndpoint>();
+        var service = new ClienteService(dbContext, publishEndpointMock.Object);
         var request = new CriarClienteRequest("Maria Silva", "123.456.789-00", "maria@email.com");
 
         var resultado = await service.CadastrarClienteAsync(request);
@@ -33,15 +37,19 @@ public class ClienteServiceTests
         Assert.True(resultado.DataCadastro <= DateTime.UtcNow);
 
         var clienteNoBanco = await dbContext.Clientes.FindAsync(resultado.Id);
-        
+
         Assert.NotNull(clienteNoBanco);
         Assert.Equal(resultado.Id, clienteNoBanco.Id);
+        publishEndpointMock.Verify(x =>
+                x.Publish(It.IsAny<ClienteCadastrado>(), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
     public async Task ObterPorIdAsync_DeveRetornarCliente_QuandoEleExistirNoBanco()
     {
         var dbContext = GetDbContext();
+        var publishEndpointMock = new Mock<IPublishEndpoint>();
         var clienteExistente = new Cliente
         {
             Id = Guid.NewGuid(),
@@ -50,11 +58,11 @@ public class ClienteServiceTests
             Email = "joao@email.com",
             DataCadastro = DateTime.UtcNow
         };
-        
+
         dbContext.Clientes.Add(clienteExistente);
         await dbContext.SaveChangesAsync();
 
-        var service = new ClienteService(dbContext);
+        var service = new ClienteService(dbContext, publishEndpointMock.Object);
 
         var resultado = await service.ObterPorIdAsync(clienteExistente.Id);
 
@@ -67,7 +75,8 @@ public class ClienteServiceTests
     public async Task ObterPorIdAsync_DeveRetornarNull_QuandoClienteNaoExistir()
     {
         var dbContext = GetDbContext();
-        var service = new ClienteService(dbContext);
+        var publishEndpointMock = new Mock<IPublishEndpoint>();
+        var service = new ClienteService(dbContext, publishEndpointMock.Object);
         var idInexistente = Guid.NewGuid();
 
         var resultado = await service.ObterPorIdAsync(idInexistente);

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PBCadastroCliente.Data;
 using PBCadastroCliente.Services;
 using PBCadastroCliente.Validators;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,18 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseInMemoryDataba
 
 builder.Services.AddScoped<IClienteService, ClienteService>();
 
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", host =>
+        {
+            host.Username("guest");
+            host.Password("guest");
+        });
+    });
+});
+
 var app = builder.Build();
 
 var versionSet = app.NewApiVersionSet()
@@ -36,22 +49,24 @@ app.UseHttpsRedirection();
 clientesGroup.MapGet("/{id}", async (Guid id, IClienteService clienteService) =>
 {
     var cliente = await clienteService.ObterPorIdAsync(id);
-    
+
     return cliente is not null ? Results.Ok(cliente) : Results.NotFound(new { message = "Cliente não encontrado." });
 });
 
-clientesGroup.MapPost("/", async (CriarClienteRequest request, IValidator<CriarClienteRequest> validator, IClienteService clienteService) =>
-{
-    var validationResult = await validator.ValidateAsync(request);
-    if (!validationResult.IsValid)
+clientesGroup.MapPost("/",
+    async (CriarClienteRequest request, IValidator<CriarClienteRequest> validator, IClienteService clienteService) =>
     {
-        return Results.ValidationProblem(validationResult.ToDictionary());
-    }
-    var cliente = await clienteService.CadastrarClienteAsync(request);
-    
-    return Results.Created($"/api/v1/clientes/{cliente.Id}",
-        cliente);
-});
+        var validationResult = await validator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            return Results.ValidationProblem(validationResult.ToDictionary());
+        }
+
+        var cliente = await clienteService.CadastrarClienteAsync(request);
+
+        return Results.Created($"/api/v1/clientes/{cliente.Id}",
+            cliente);
+    });
 
 app.Run();
 

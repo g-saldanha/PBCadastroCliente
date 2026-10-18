@@ -1,14 +1,18 @@
+using MassTransit;
 using PBCadastroCliente.Data;
+using PBCadastroCliente.Messages;
 
 namespace PBCadastroCliente.Services;
 
 public class ClienteService : IClienteService
 {
     private readonly AppDbContext _db;
+    private readonly IPublishEndpoint _publishEndpoint;
     
-    public ClienteService(AppDbContext db)
+    public ClienteService(AppDbContext db, IPublishEndpoint publishEndpoint)
     {
         _db = db;
+        _publishEndpoint = publishEndpoint;
     }
     
     public async Task<Cliente?> ObterPorIdAsync(Guid id)
@@ -16,7 +20,7 @@ public class ClienteService : IClienteService
         return await _db.Clientes.FindAsync(id); 
     }
 
-    public Task<Cliente> CadastrarClienteAsync(CriarClienteRequest request)
+    public async Task<Cliente> CadastrarClienteAsync(CriarClienteRequest request)
     {
         var cliente = new Cliente
         {
@@ -29,8 +33,8 @@ public class ClienteService : IClienteService
         _db.Clientes.Add(cliente);
         _db.SaveChangesAsync();
         
-        //Mensageria
+        await _publishEndpoint.Publish(new ClienteCadastrado(cliente.Id, cliente.Cpf, cliente.Email));
         
-        return Task.FromResult(cliente);
+        return cliente;
     }
 }
