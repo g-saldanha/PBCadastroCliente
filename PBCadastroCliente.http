@@ -1,6 +1,6 @@
 @PBCadastroCliente_HostAddress = http://localhost:5054
 
-GET {{PBCadastroCliente_HostAddress}}/api/v1/clientes/3fa85f64-5717-4562-b3fc-2c963f66afa6
+GET {{PBCadastroCliente_HostAddress}}/api/v1/clientes/eb04f17a-b948-44a9-bc14-1885c41d2818
 Accept: application/json
 
 ###

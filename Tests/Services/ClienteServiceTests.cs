@@ -2,7 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using PBCadastroCliente.Data;
-using PBCadastroCliente.Messages;
+using ParanaBanco.Messages;
 using PBCadastroCliente.Services;
 using Xunit;
 

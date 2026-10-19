@@ -1,6 +1,6 @@
 using MassTransit;
 using PBCadastroCliente.Data;
-using PBCadastroCliente.Messages;
+using ParanaBanco.Messages;
 
 namespace PBCadastroCliente.Services;
 
@@ -31,9 +31,13 @@ public class ClienteService : IClienteService
             DataCadastro = DateTime.UtcNow,
         };
         _db.Clientes.Add(cliente);
-        _db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
+        
+        Console.WriteLine($"\n[MS1] Preparando para enviar evento ClienteCadastrado para o RabbitMQ. ClienteID: {cliente.Id}");
         
         await _publishEndpoint.Publish(new ClienteCadastrado(cliente.Id, cliente.Cpf, cliente.Email));
+        
+        Console.WriteLine($"[MS1] Evento enviado com sucesso!\n");
         
         return cliente;
     }

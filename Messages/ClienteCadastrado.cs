@@ -1,3 +1,3 @@
-namespace PBCadastroCliente.Messages;
+namespace ParanaBanco.Messages;
 
-public record ClienteCadastrado(Guid clienteId, string Cpf, string Email);
+public record ClienteCadastrado(Guid ClienteId, string Cpf, string Email);
