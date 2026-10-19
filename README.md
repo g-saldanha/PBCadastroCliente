@@ -1,86 +1,50 @@
-# Microsserviço 1: Cadastro de Clientes
+# 🏦 PBCadastroCliente - Microsserviço de Cadastro
 
-Este repositório contém o primeiro microsserviço do desafio técnico para Desenvolvedor Backend do Paraná Banco. Este microsserviço é responsável por registrar novos clientes via API REST e publicar eventos de cadastro em um hub de mensageria.
+## 🗺️ Fluxograma da Arquitetura
+Abaixo está o desenho da nossa arquitetura orientada a eventos, demonstrando o fluxo da informação desde o cadastro até a emissão dos cartões:
 
-## 📋 Funcionalidades
+![Fluxograma da Solução](mermaid%20fluxograma.png)
 
-* **Cadastro de Cliente:** Endpoint REST para criação de um novo cliente com validações rigorosas de CPF, e-mail e dados obrigatórios.
-* **Consulta de Cliente:** Endpoint para consultar os dados de um cliente através do seu ID.
-* **Mensageria:** Publicação assíncrona do evento `ClienteCadastrado` no hub de mensageria após o cadastro com sucesso.
+## 🛠 Tecnologias Utilizadas
+- **.NET 10.0** (ASP.NET Core Web API)
+- **Entity Framework Core** (In-Memory Database para simplificação do ambiente local)
+- **MassTransit + RabbitMQ** (Mensageria e Arquitetura Orientada a Eventos)
+- **FluentValidation** (Validação de regras de negócio e de domínio na entrada de dados)
+- **xUnit + Moq** (Testes de Unidade)
+- **Asp.Versioning.Http** (Versionamento de API - v1)
 
-## 🛠️ Tecnologias Utilizadas
+## 🏗 Decisões Técnicas
+- **Arquitetura Orientada a Eventos (EDA):** A comunicação com o microsserviço de Propostas (MS2) é feita de forma assíncrona. Assim que o cliente é salvo no banco de dados, publicamos um evento no RabbitMQ.
+- **Namespace Global de Mensagens:** Foi adotado o namespace compartilhado `ParanaBanco.Messages` para o contrato do evento, garantindo o roteamento perfeito no broker (RabbitMQ) e evitando a criação de filas "fantasmas" ou mensagens perdidas.
+- **Validações na Entrada (Fail-Fast):** O uso do FluentValidation garante que requisições com dados inválidos retornem `400 Bad Request` imediatamente, poupando processamento de banco de dados e de mensageria.
 
-* **Framework:** .NET 10.0
-* **Mensageria:** RabbitMQ / Azure Service Bus (conforme configuração)
-* **Testes:** xUnit para testes de unidade
-* **Arquitetura:** Princípios de Clean Code, separação de responsabilidades e design de APIs RESTful.
-
-
-## ⚙️ Pré-requisitos
-
-Antes de iniciar, certifique-se de ter as seguintes ferramentas instaladas:
-
-* [.NET 10.0 SDK](https://dotnet.microsoft.com/)
-* [Docker](https://www.docker.com/) (para rodar o hub de mensageria localmente)
-* IDE de sua preferência (Visual Studio 2022, Rider, VS Code)
+## 📡 Mensageria (Eventos)
+- **Produz / Publica:** `ClienteCadastrado`
+    - *Payload:* `ClienteId`, `Cpf`, `Email`
+    - *Namespace:* `ParanaBanco.Messages`
 
 ## 🚀 Como Executar Localmente
 
-1. **Clone este repositório:**
-```bash
-git clone https://github.com/seu-usuario/cadastro-clientes-pb.git
-cd cadastro-clientes-pb
-```
+### Pré-requisitos
+- [.NET 10 SDK](https://dotnet.microsoft.com/)
+- [Docker](https://www.docker.com/) (Para rodar o RabbitMQ)
 
-2. **Suba a infraestrutura (Mensageria e Banco de Dados):**
-*(Se houver um arquivo `docker-compose.yml` na raiz)*
-```bash
-docker-compose up -d
-```
+### Passos para Execução
 
-3. **Configure as Variáveis de Ambiente:**
-Renomeie o arquivo `appsettings.Example.json` para `appsettings.Development.json` e preencha as configurações, especialmente a string de conexão da mensageria.
-```json
-{
-  "ConnectionStrings": {
-    "Database": "SuaConnectionStringAqui",
-    "MessagingHub": "Host=localhost;Username=guest;Password=guest"
-  }
-}
-```
-
-
-4. **Execute o projeto:**
-```bash
-dotnet restore
-dotnet run --project src/CadastroClientes.Api
-```
-
-A API estará disponível em `https://localhost:5001/swagger` (ou porta configurada).
-
-## 📡 Endpoints da API
-
-A documentação interativa (Swagger) está disponível ao rodar o projeto. Os endpoints principais são:
-
-* `POST /api/v1/clientes` - Cadastra um novo cliente.
-* `GET /api/v1/clientes/{id}` - Consulta um cliente específico pelo ID.
-
-## 🧠 Decisões Técnicas
-
-* **Validações:** Utilização de bibliotecas (ex: FluentValidation) para garantir a integridade dos dados obrigatórios (CPF e e-mail) antes da persistência e publicação do evento.
-* **Mensageria Assíncrona:** A publicação do evento `ClienteCadastrado` foi implementada de forma desacoplada para não bloquear a resposta da API REST e garantir a comunicação fluida com o serviço de Proposta de Crédito.
-* **Qualidade de Código:** O projeto foi estruturado seguindo boas práticas de organização para facilitar a manutenção e manter as responsabilidades bem definidas.
-
-
-## 🧪 Testes
-
-Para garantir a qualidade, foram implementados testes de unidade utilizando o **xUnit**. Os testes seguem o padrão AAA (Arrange, Act, Assert) e focam nas regras de validação e na correta publicação do evento no hub.
-
-Para rodar os testes, execute o comando:
-
-```bash
-dotnet test
-```
-
----
-*Este projeto faz parte do desafio de Recrutamento & Seleção Técnica - Desenvolvedor Backend (Maio 2026)*.
+1. **Suba o RabbitMQ via Docker:**
+   Abra o terminal e execute o seguinte comando para criar um container do RabbitMQ com o painel de gerenciamento ativo:
+   ```bash
+   docker run -d --hostname rabbit-local --name rabbitmq-pb -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+   
+2. **Clone e inicie a Aplicação:**
+    ```bash
+    dotnet run
+   
+3. **Acesse a API:**
+   Realize um POST /api/v1/clientes com o seguinte payload de exemplo:
+    ```bash
+   {
+       "nome": "João da Silva",
+       "cpf": "674.933.810-03",
+       "email": "joao@email.com"
+   }
